@@ -1,0 +1,31 @@
+name: Tâche planifiée - 15 minutes
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:  # Permet de lancer manuellement
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+      
+      - name: Exécuter le script
+        run: python main.py
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+      
+      - name: Notifier en cas d'erreur
+        if: failure()
+        run: echo "⚠️ Le script a échoué!"
