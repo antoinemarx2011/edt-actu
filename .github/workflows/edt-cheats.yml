@@ -1,32 +1,26 @@
 name: 🎓 Surveillance EDT EcoleDirecte
-
 on:
   schedule:
-    - cron: */10 5-19 * * *
+    - cron: '*/10 6-20 * * 1-5'
   workflow_dispatch:
-
 jobs:
   check-edt:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-
       - name: 🐍 Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: 📦 Install
         run: pip install requests
-
       - name: 💾 Restore cache EDT
         uses: actions/cache@v4
         with:
           path: edt_cache.json
           key: edt-${{ github.run_id }}
           restore-keys: edt-
-
       - name: 🔍 Check EDT
         env:
           ED_USERNAME:  ${{ secrets.ED_USERNAME }}
@@ -36,7 +30,6 @@ jobs:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID:   ${{ secrets.TG_CHAT_ID }}
         run: python edt_checker.py
-
       - name: 💾 Save cache EDT
         uses: actions/cache/save@v4
         if: always()
