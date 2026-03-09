@@ -7,8 +7,8 @@ from urllib.parse import quote
 
 ED_USERNAME  = os.environ["ED_USERNAME"]
 ED_PASSWORD  = os.environ["ED_PASSWORD"]
-ED_CN        = os.environ["ED_CN"]
-ED_CV        = os.environ["ED_CV"]
+ED_CN = os.environ["ED_CN"]
+ED_CV = os.environ["ED_CV"]
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_CHAT_ID   = os.environ["TG_CHAT_ID"]
 
