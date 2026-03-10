@@ -1,4 +1,4 @@
-#🎓 EDT Checker — EcoleDirecte#
+#🎓 EDT Checker — EcoleDirecte
 Bot de surveillance automatique de l'emploi du temps EcoleDirecte. Détecte les changements (annulations, ajouts, changements de salle ou de prof) et envoie une notification Telegram en temps réel.
 ✨ Fonctionnalités
 
