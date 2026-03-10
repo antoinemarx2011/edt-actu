@@ -1,4 +1,4 @@
-#🎓 EDT Checker — EcoleDirecte
+# 🎓 EDT CHECKER — ECOLEDIRECTE
 Bot de surveillance automatique de l'emploi du temps EcoleDirecte. Détecte les changements (annulations, ajouts, changements de salle ou de prof) et envoie une notification Telegram en temps réel.
 ✨ Fonctionnalités
 
@@ -9,18 +9,12 @@ Exécution automatique toutes les 10 minutes via GitHub Actions (lun–ven, 6h�
 
 ⚙️ Configuration
 Ajoute les secrets suivants dans ton repo GitHub (Settings > Secrets and variables > Actions) :
-SecretDescriptionED_USERNAMEIdentifiant EcoleDirecteED_PASSWORDMot de passe EcoleDirecteED_CNCode 2FA (laisser vide si non activé)ED_CVValeur 2FA (laisser vide si non activé)TG_BOT_TOKENToken du bot TelegramTG_CHAT_IDID du chat Telegram où envoyer les alertes
-🚀 Lancement en local
-bashexport ED_USERNAME="..."
-export ED_PASSWORD="..."
-export ED_CN=""
-export ED_CV=""
-export TG_BOT_TOKEN="..."
-export TG_CHAT_ID="..."
-
-pip install requests
-python edt_checker.py
-```
+ED_USERNAME = Identifiant EcoleDirecte
+ED_PASSWORD = Mot de passe EcoleDirecte
+ED_CN = Code 2FA (laisser vide si non activé
+ED_CV = Valeur 2FA (laisser vide si non activé)
+TG_BOT_TOKEN = Token du bot Telegram
+TG_CHAT_ID = ID du chat Telegram où envoyer les alertes
 
 ## 📬 Exemple de notification
 ```
