@@ -7,8 +7,8 @@ from urllib.parse import quote
 
 ED_USERNAME  = os.environ["ED_USERNAME"]
 ED_PASSWORD  = os.environ["ED_PASSWORD"]
-ED_CN = os.environ["ED_CN"]
-ED_CV = os.environ["ED_CV"]
+ED_CN        = os.environ["ED_CN"]
+ED_CV        = os.environ["ED_CV"]
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_CHAT_ID   = os.environ["TG_CHAT_ID"]
 
@@ -89,21 +89,57 @@ def hash_edt(cours):
 def format_diff(anciens, nouveaux):
     def key(c): return (c.get("jour", c.get("date", "")), c.get("heureDebut", ""))
     am, nm = {key(c): c for c in anciens}, {key(c): c for c in nouveaux}
+
+    supprimes = {k: c for k, c in am.items() if k not in nm and not c.get("isAnnule")}
+    ajoutes   = {k: c for k, c in nm.items() if k not in am and not c.get("isAnnule")}
+
     lignes = ["🔔 <b>Changement dans ton EDT !</b>\n"]
-    for k, c in am.items():
-        if k not in nm:
+    deplacements_anciens = set()
+    deplacements_nouveaux = set()
+
+    # Détection des déplacements : même matière + même prof, créneau différent
+    for k_old, c_old in supprimes.items():
+        for k_new, c_new in ajoutes.items():
+            if (c_old.get("matiere") == c_new.get("matiere")
+                    and c_old.get("prof", "") == c_new.get("prof", "")
+                    and k_new not in deplacements_nouveaux):
+                details = []
+                if k_old[0] != k_new[0]:
+                    details.append(f"{k_old[0]} ➡️ {k_new[0]}")
+                if k_old[1] != k_new[1]:
+                    details.append(f"{k_old[1]} ➡️ {k_new[1]}")
+                if c_old.get("salle") != c_new.get("salle"):
+                    details.append(f"salle {c_old.get('salle','?')} ➡️ {c_new.get('salle','?')}")
+                lignes.append(
+                    f"🔀 <b>Déplacé :</b> {c_old.get('matiere','?')} — {', '.join(details)}"
+                )
+                deplacements_anciens.add(k_old)
+                deplacements_nouveaux.add(k_new)
+                break
+
+    # Cours supprimés (hors déplacements)
+    for k, c in supprimes.items():
+        if k not in deplacements_anciens:
             lignes.append(f"❌ <b>Supprimé :</b> {c.get('matiere','?')} le {k[0]} à {k[1]}")
-        elif nm[k].get("isAnnule") and not c.get("isAnnule"):
+
+    # Cours annulés
+    for k, c in am.items():
+        if k in nm and nm[k].get("isAnnule") and not c.get("isAnnule"):
             lignes.append(f"🚫 <b>Annulé :</b> {c.get('matiere','?')} le {k[0]} à {k[1]}")
-    for k, c in nm.items():
-        if k not in am:
+
+    # Cours ajoutés (hors déplacements)
+    for k, c in ajoutes.items():
+        if k not in deplacements_nouveaux:
             lignes.append(f"✅ <b>Ajouté :</b> {c.get('matiere','?')} le {k[0]} à {k[1]} — salle {c.get('salle','?')}")
+
+    # Changements de salle / prof sur créneau existant
     for k in set(am) & set(nm):
         a, n = am[k], nm[k]
         if a.get("salle") != n.get("salle"):
             lignes.append(f"🏫 <b>Salle changée :</b> {n.get('matiere','?')} {k[0]} à {k[1]} : {a.get('salle','?')} ➡️ {n.get('salle','?')}")
         if a.get("prof") != n.get("prof"):
             lignes.append(f"👨‍🏫 <b>Prof changé :</b> {n.get('matiere','?')} {k[0]} → {n.get('prof','?')}")
+
     if len(lignes) == 1:
         lignes.append("(changement détecté mais non identifié précisément)")
     return "\n".join(lignes)
