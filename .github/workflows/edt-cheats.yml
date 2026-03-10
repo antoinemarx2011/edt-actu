@@ -1,26 +1,44 @@
 name: 🎓 Surveillance EDT EcoleDirecte
+
 on:
   schedule:
     - cron: '*/10 6-20 * * 1-5'
   workflow_dispatch:
+
 jobs:
   check-edt:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-      - name: 🐍 Python 3.11
-        uses: actions/setup-python@v5
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v5
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: 📦 Install
+
+      - name: 📦 Install dependencies
         run: pip install requests
-      - name: 💾 Restore cache EDT
-        uses: actions/cache@v4
+
+      - name: 💾 Restore cache files
+        uses: actions/cache@v5
         with:
-          path: edt_cache.json
-          key: edt-${{ github.run_id }}
-          restore-keys: edt-
+          path: |
+            edt_cache.json
+            qcm.json
+          key: edt-cache-${{ github.run_id }}
+          restore-keys: |
+            edt-cache-
+
+      - name: 🔎 Afficher le cache EDT
+        run: |
+          if [ -f edt_cache.json ]; then
+            cat edt_cache.json
+          else
+            echo "Pas de cache trouvé"
+          fi
+
       - name: 🔍 Check EDT
         env:
           ED_USERNAME:  ${{ secrets.ED_USERNAME }}
@@ -30,9 +48,12 @@ jobs:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID:   ${{ secrets.TG_CHAT_ID }}
         run: python edt_checker.py
-      - name: 💾 Save cache EDT
-        uses: actions/cache/save@v4
+
+      - name: 💾 Save cache files
+        uses: actions/cache/save@v5
         if: always()
         with:
-          path: edt_cache.json
-          key: edt-${{ github.run_id }}
+          path: |
+            edt_cache.json
+            qcm.json
+          key: edt-cache-${{ github.run_id }}
