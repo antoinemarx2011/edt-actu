@@ -27,7 +27,7 @@ jobs:
           path: |
             edt_cache.json
             qcm.json
-          key: edt-cache-${{ github.run_id }}
+          key: edt-cache-permanent
           restore-keys: |
             edt-cache-
 
