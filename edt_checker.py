@@ -1,7 +1,10 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import json
 import os
 import hashlib
+import html
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
@@ -31,7 +34,16 @@ def send_telegram(message):
 
 def login():
     session = requests.Session()
-    r = session.get(f"{BASE}/login.awp?gtk=1&v=4.75.0", headers=HEADERS, timeout=10)
+    retry_strategy = Retry(
+        total=4,
+        backoff_factor=5,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "POST"],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    r = session.get(f"{BASE}/login.awp?gtk=1&v=4.75.0", headers=HEADERS, timeout=30)
     gtk = session.cookies.get("GTK", "")
     h = {**HEADERS, **({"X-Gtk": gtk} if gtk else {})}
     body = json.dumps({
@@ -41,7 +53,7 @@ def login():
         "uuid": "",
         "fa": [{"cn": ED_CN, "cv": ED_CV}]
     })
-    r = session.post(f"{BASE}/login.awp?verbe=post&v=4.75.0", data=f"data={quote(body)}", headers=h, timeout=15)
+    r = session.post(f"{BASE}/login.awp?verbe=post&v=4.75.0", data=f"data={quote(body)}", headers=h, timeout=30)
     resp = r.json()
     if resp.get("code") != 200:
         raise Exception(f"Login échoué ({resp.get('code')}) : {resp.get('message')}")
@@ -50,15 +62,15 @@ def login():
     eleve = next((a for a in accounts if a.get("typeCompte") == "E"), accounts[0] if accounts else {})
     eleve_id = eleve.get("id", os.environ.get("ED_ELEVE_ID", ""))
     print(f"[Login] ✓ {eleve.get('prenom','')} {eleve.get('nom','')} (id={eleve_id})")
-    return token, eleve_id, h
+    return token, eleve_id, h, session
 
-def get_edt(token, eleve_id, h, date_debut, date_fin):
+def get_edt(session, token, eleve_id, h, date_debut, date_fin):
     body = json.dumps({"dateDebut": date_debut, "dateFin": date_fin, "avecTrous": False})
-    r = requests.post(
+    r = session.post(
         f"{BASE}/E/{eleve_id}/emploidutemps.awp?verbe=get&v=4.75.0",
         data=f"data={quote(body)}",
         headers={**h, "X-Token": token},
-        timeout=15
+        timeout=30
     )
     resp = r.json()
     if resp.get("code") != 200:
@@ -151,12 +163,12 @@ def main():
     d_deb  = lundi.strftime("%Y-%m-%d")
     d_fin  = (lundi + timedelta(days=13)).strftime("%Y-%m-%d")
     try:
-        token, eleve_id, h = login()
-        cours = get_edt(token, eleve_id, h, d_deb, d_fin)
+        token, eleve_id, h, session = login()
+        cours = get_edt(session, token, eleve_id, h, d_deb, d_fin)
         print(f"[EDT] {len(cours)} cours ({d_deb} → {d_fin})")
     except Exception as e:
         print(f"[ERREUR] {e}")
-        send_telegram(f"⚠️ Erreur EDT :\n<code>{e}</code>")
+        send_telegram(f"⚠️ Erreur EDT :\n<code>{html.escape(str(e))}</code>")
         return
     cache = load_cache()
     key   = f"{d_deb}_{d_fin}"
