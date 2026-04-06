@@ -164,8 +164,7 @@ def main():
     if key not in cache:
         cache[key] = {"hash": nhash, "data": cours}
         save_cache(cache)
-        send_telegram(f"✅ Bot EDT démarré !\nSurveillance du {d_deb} au {d_fin} ({len(cours)} cours).")
-        print("[Cache] Premier enregistrement.")
+        print("[Cache] Premier enregistrement (pas de notification).")
     elif cache[key]["hash"] != nhash:
         send_telegram(format_diff(cache[key]["data"], cours))
         cache[key] = {"hash": nhash, "data": cours}
